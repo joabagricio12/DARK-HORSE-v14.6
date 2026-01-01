@@ -12,22 +12,36 @@ import { runGenerationCycle, parseModules } from './analysisService';
 import { INITIAL_HISTORY } from './initialData';
 
 const App: React.FC = () => {
-    // Persistência Avançada (LocalStorage + Offline Recovery)
+    // Configurações de Ciclo de Limpeza (999 limite -> remove 20 mais antigos)
+    const MAX_RECORDS = 999;
+    const CLEANUP_AMOUNT = 20;
+
+    const maintainLimit = <T,>(arr: T[], newItem: T, isNewAtStart: boolean = true): T[] => {
+        const combined = isNewAtStart ? [newItem, ...arr] : [...arr, newItem];
+        if (combined.length >= MAX_RECORDS) {
+            // Se atingiu 999, remove os 20 mais antigos (os da ponta oposta ao novo item)
+            const targetSize = MAX_RECORDS - CLEANUP_AMOUNT;
+            return isNewAtStart ? combined.slice(0, targetSize) : combined.slice(-targetSize);
+        }
+        return combined;
+    };
+
+    // Persistência Total v14.8 (Senior Engine High-Precision)
     const [inputHistory, setInputHistory] = useState<DataSet[]>(() => {
-        const saved = localStorage.getItem('dh_input_v14_6');
+        const saved = localStorage.getItem('dh_input_v14_8');
         return saved ? JSON.parse(saved) : INITIAL_HISTORY;
     });
-    const [hitsHistory, setHitsHistory] = useState<HitRecord[]>(() => JSON.parse(localStorage.getItem('dh_hits_v14_6') || '[]'));
-    const [generatedHistory, setGeneratedHistory] = useState<DataSet[]>(() => JSON.parse(localStorage.getItem('dh_gen_v14_6') || '[]'));
-    const [rectificationHistory, setRectificationHistory] = useState<RectificationRecord[]>(() => JSON.parse(localStorage.getItem('dh_rect_v14_6') || '[]'));
-    const [settings, setSettings] = useState<AppSettings>(() => JSON.parse(localStorage.getItem('dh_settings_v14_6') || '{"entropy": 0.5, "voiceEnabled": false}'));
+    const [hitsHistory, setHitsHistory] = useState<HitRecord[]>(() => JSON.parse(localStorage.getItem('dh_hits_v14_8') || '[]'));
+    const [generatedHistory, setGeneratedHistory] = useState<DataSet[]>(() => JSON.parse(localStorage.getItem('dh_gen_v14_8') || '[]'));
+    const [rectificationHistory, setRectificationHistory] = useState<RectificationRecord[]>(() => JSON.parse(localStorage.getItem('dh_rect_v14_8') || '[]'));
+    const [settings, setSettings] = useState<AppSettings>(() => JSON.parse(localStorage.getItem('dh_settings_v14_8') || '{"entropy": 0.5, "voiceEnabled": false}'));
 
-    const [m1, setM1] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m1_v14_6') || '["","","","","","",""]'));
-    const [m2, setM2] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m2_v14_6') || '["","","","","","",""]'));
-    const [m3, setM3] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m3_v14_6') || '["","","","","","",""]'));
+    const [m1, setM1] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m1_v14_8') || '["","","","","","",""]'));
+    const [m2, setM2] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m2_v14_8') || '["","","","","","",""]'));
+    const [m3, setM3] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m3_v14_8') || '["","","","","","",""]'));
 
     const [generatedResult, setGeneratedResult] = useState<DataSet | null>(() => {
-        const saved = localStorage.getItem('dh_last_gen_v14_6');
+        const saved = localStorage.getItem('dh_last_gen_v14_8');
         return saved ? JSON.parse(saved) : null;
     });
     
@@ -38,49 +52,46 @@ const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [notification, setNotification] = useState<string | null>(null);
-    const [isLocked, setIsLocked] = useState(() => localStorage.getItem('dh_btn_lock') === 'true');
+    const [isLocked, setIsLocked] = useState(() => localStorage.getItem('dh_btn_lock_v14_8') === 'true');
 
     const undoStack = useRef<string[][]>([]);
 
-    // Sincronização de Persistência
+    // Sincronização e Persistência de Dados
     useEffect(() => {
-        localStorage.setItem('dh_input_v14_6', JSON.stringify(inputHistory));
-        localStorage.setItem('dh_hits_v14_6', JSON.stringify(hitsHistory));
-        localStorage.setItem('dh_gen_v14_6', JSON.stringify(generatedHistory));
-        localStorage.setItem('dh_rect_v14_6', JSON.stringify(rectificationHistory));
-        localStorage.setItem('dh_settings_v14_6', JSON.stringify(settings));
-        localStorage.setItem('dh_m1_v14_6', JSON.stringify(m1));
-        localStorage.setItem('dh_m2_v14_6', JSON.stringify(m2));
-        localStorage.setItem('dh_m3_v14_6', JSON.stringify(m3));
-        localStorage.setItem('dh_btn_lock', isLocked.toString());
-        if (generatedResult) localStorage.setItem('dh_last_gen_v14_6', JSON.stringify(generatedResult));
+        localStorage.setItem('dh_input_v14_8', JSON.stringify(inputHistory));
+        localStorage.setItem('dh_hits_v14_7', JSON.stringify(hitsHistory));
+        localStorage.setItem('dh_gen_v14_7', JSON.stringify(generatedHistory));
+        localStorage.setItem('dh_rect_v14_7', JSON.stringify(rectificationHistory));
+        localStorage.setItem('dh_settings_v14_8', JSON.stringify(settings));
+        localStorage.setItem('dh_m1_v14_8', JSON.stringify(m1));
+        localStorage.setItem('dh_m2_v14_8', JSON.stringify(m2));
+        localStorage.setItem('dh_m3_v14_8', JSON.stringify(m3));
+        localStorage.setItem('dh_btn_lock_v14_8', isLocked.toString());
+        if (generatedResult) localStorage.setItem('dh_last_gen_v14_8', JSON.stringify(generatedResult));
     }, [inputHistory, hitsHistory, generatedHistory, rectificationHistory, settings, m1, m2, m3, isLocked, generatedResult]);
 
-    // Função de Comparação Automática (M3 vs Última Geração)
-    const autoCompare = useCallback((newM3: string[]) => {
+    // Comparação Automática de Resultados (Foco IA Sênior)
+    const autoCompareResults = useCallback((currentM3: string[]) => {
         if (!generatedResult) return;
         
-        const newHits: HitRecord[] = [];
-        newM3.forEach((val, idx) => {
-            if (!val || val.length < 3) return;
-            const pred = generatedResult[idx].join('');
+        const automatedHits: HitRecord[] = [];
+        currentM3.forEach((actualValue, idx) => {
+            if (!actualValue || actualValue.length < 3) return;
+            const predictedValue = generatedResult[idx].join('');
             
-            // Acerto Exato
-            if (val === pred) {
-                newHits.push({
+            if (actualValue === predictedValue) {
+                automatedHits.push({
                     id: crypto.randomUUID(),
-                    value: val,
+                    value: actualValue,
                     type: idx === 6 ? 'Centena' : 'Milhar',
                     status: 'Acerto',
                     position: idx + 1,
                     timestamp: Date.now()
                 });
-            } 
-            // Quase Acerto (Permutação/Ordem diferente)
-            else if (val.split('').sort().join('') === pred.split('').sort().join('')) {
-                newHits.push({
+            } else if (actualValue.split('').sort().join('') === predictedValue.split('').sort().join('')) {
+                automatedHits.push({
                     id: crypto.randomUUID(),
-                    value: val,
+                    value: actualValue,
                     type: idx === 6 ? 'Centena' : 'Milhar',
                     status: 'Quase Acerto',
                     position: idx + 1,
@@ -89,9 +100,15 @@ const App: React.FC = () => {
             }
         });
 
-        if (newHits.length > 0) {
-            setHitsHistory(prev => [...newHits, ...prev].slice(0, 150));
-            setNotification(`AUTO-SINC: ${newHits.length} PADRÕES DETECTADOS`);
+        if (automatedHits.length > 0) {
+            setHitsHistory(prev => {
+                let current = prev;
+                automatedHits.forEach(hit => {
+                    current = maintainLimit(current, hit, true);
+                });
+                return current;
+            });
+            setNotification(`IA SYNC: ${automatedHits.length} NOVOS PADRÕES`);
             setTimeout(() => setNotification(null), 3000);
         }
     }, [generatedResult]);
@@ -105,8 +122,8 @@ const App: React.FC = () => {
             position: pos, 
             timestamp: Date.now() 
         };
-        setHitsHistory(prev => [newHit, ...prev].slice(0, 150));
-        setNotification(`${status.toUpperCase()}: ${value} (Rank ${pos})`);
+        setHitsHistory(prev => maintainLimit(prev, newHit, true));
+        setNotification(`${status.toUpperCase()}: ${value} (Pos: ${pos})`);
         setTimeout(() => setNotification(null), 2500);
     }, []);
 
@@ -120,8 +137,8 @@ const App: React.FC = () => {
             rankLabel,
             timestamp: Date.now()
         };
-        setRectificationHistory(prev => [newRec, ...prev].slice(0, 150));
-        setNotification(`REALIDADE SALVA: ${act}`);
+        setRectificationHistory(prev => maintainLimit(prev, newRec, true));
+        setNotification(`SISTEMA CALIBRADO: ${act}`);
         setTimeout(() => setNotification(null), 2500);
     }, []);
 
@@ -135,28 +152,28 @@ const App: React.FC = () => {
             setCandidates(res.candidates);
             setAdvancedPredictions(res.advancedPredictions);
             setAnalysisData(res.analysis);
-            setGeneratedHistory(prev => [res.result, ...prev].slice(0, 100));
+            setGeneratedHistory(prev => maintainLimit(prev, res.result, true));
             setIsLoading(false);
-            setIsLocked(true); // Bloqueia após gerar
+            setIsLocked(true); 
         }, 1500);
     };
 
-    const handleUpdateM3 = (v: string[]) => {
+    const handleM3Change = (v: string[]) => {
         if (isLocked) {
-            autoCompare(v); // Compara antes de rotacionar se necessário
-            setIsLocked(false); // Desbloqueia ao inserir novos dados
+            autoCompareResults(v);
+            setIsLocked(false); 
         }
         setM3(v);
     };
 
     const handlePasteM3 = (v: string[]) => {
         undoStack.current.push([...m3]);
-        autoCompare(v);
+        autoCompareResults(v);
         setM1(m2); 
         setM2(m3); 
         setM3(v);
-        setInputHistory(prev => [...prev, v.map(l => l.split('').map(Number))].slice(-150));
-        setIsLocked(false); // Libera o botão
+        setInputHistory(prev => maintainLimit(prev, v.map(l => l.split('').map(Number)), false));
+        setIsLocked(false); 
     };
 
     return (
@@ -188,7 +205,7 @@ const App: React.FC = () => {
                     id="3" 
                     title="ATUAL" 
                     values={m3} 
-                    setValues={handleUpdateM3} 
+                    setValues={handleM3Change} 
                     onPaste={handlePasteM3} 
                     onClear={() => { setM3(Array(7).fill("")); setIsLocked(false); }}
                     onUndo={() => { if(undoStack.current.length > 0) { setM3(undoStack.current.pop()!); setIsLocked(false); } }}
@@ -200,11 +217,11 @@ const App: React.FC = () => {
                 disabled={isLoading || isLocked}
                 className={`w-full py-5 font-orbitron font-black rounded-[1.5rem] uppercase tracking-widest transition-all shadow-lg border-2 ${
                     isLoading || isLocked
-                    ? 'bg-slate-900/50 border-slate-800 text-slate-700 cursor-not-allowed' 
+                    ? 'bg-slate-900/50 border-slate-800 text-slate-600 cursor-not-allowed' 
                     : 'bg-slate-900 border-amber-600 text-amber-500 active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
                 }`}
             >
-                {isLoading ? 'CALIBRANDO MATRIZ...' : isLocked ? 'AGUARDANDO M3...' : 'EXECUTAR ANÁLISE'}
+                {isLoading ? 'SINCRONIZANDO...' : isLocked ? 'BLOQUEADO: ATUALIZE M3' : 'EXECUTAR ANÁLISE SÊNIOR'}
             </button>
 
             {(generatedResult || isLoading) && (

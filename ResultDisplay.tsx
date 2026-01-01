@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import type { DataSet } from './types';
 
@@ -57,7 +56,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onMarkHit, onManu
                             {openMenu === idx && (
                                 <div 
                                     onClick={(e) => e.stopPropagation()} 
-                                    className="fixed md:absolute top-1/2 left-1/2 md:top-[-20px] md:left-1/2 -translate-x-1/2 -translate-y-1/2 md:translate-y-0 w-[90vw] max-w-[230px] bg-slate-950 rounded-[2rem] z-[9999] p-5 flex flex-col gap-3 border-2 border-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.7)] animate-in zoom-in duration-200"
+                                    className="fixed md:absolute top-1/2 left-1/2 md:top-[-20px] md:left-1/2 -translate-x-1/2 -translate-y-1/2 md:translate-y-0 w-[90vw] max-w-[240px] bg-slate-950 rounded-[2rem] z-[9999] p-5 flex flex-col gap-3 border-2 border-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.7)] animate-in zoom-in duration-200"
                                 >
                                     <div className="flex justify-between items-center">
                                         <div className="flex flex-col">

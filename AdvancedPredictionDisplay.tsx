@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import type { AdvancedPredictions } from './types';
 
@@ -23,7 +22,7 @@ const PositionMenu: React.FC<PositionMenuProps> = ({
     value, type, label, localRect, onLocalRectChange, onClose, onManualRectify, onMarkHit 
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
-    const [selectedRank, setSelectedRank] = useState(1);
+    const [selectedPos, setSelectedPos] = useState(1);
 
     useEffect(() => {
         if (inputRef.current) {
@@ -46,13 +45,13 @@ const PositionMenu: React.FC<PositionMenuProps> = ({
             </div>
 
             <div className="grid grid-cols-5 gap-1.5">
-                {[1, 2, 3, 4, 5].map(r => (
+                {[1, 2, 3, 4, 5].map(p => (
                     <button 
-                        key={r} 
-                        onClick={() => setSelectedRank(r)}
-                        className={`h-10 rounded-xl text-[12px] font-black border transition-all ${selectedRank === r ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-500 border-slate-800'}`}
+                        key={p} 
+                        onClick={() => setSelectedPos(p)}
+                        className={`h-10 rounded-xl text-[12px] font-black border transition-all ${selectedPos === p ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-slate-500 border-slate-800'}`}
                     >
-                        {r}º
+                        {p}º
                     </button>
                 ))}
             </div>
@@ -70,19 +69,19 @@ const PositionMenu: React.FC<PositionMenuProps> = ({
             
             <div className="flex flex-col gap-2">
                 <button 
-                    onClick={() => { onMarkHit(value, type, selectedRank, 'Acerto'); onClose(); }}
+                    onClick={() => { onMarkHit(value, type, selectedPos, 'Acerto'); onClose(); }}
                     className="w-full bg-amber-500 text-slate-950 py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg active:scale-95"
                 >
                     SALVAR ACERTO
                 </button>
                 <button 
-                    onClick={() => { onMarkHit(value, type, selectedRank, 'Quase Acerto'); onClose(); }}
+                    onClick={() => { onMarkHit(value, type, selectedPos, 'Quase Acerto'); onClose(); }}
                     className="w-full bg-slate-900 border border-amber-500/50 text-amber-500 py-3 rounded-2xl text-[8px] font-black uppercase tracking-widest active:scale-95"
                 >
                     QUASE ACERTO
                 </button>
                 <button 
-                    onClick={() => { if(localRect) { onManualRectify(value, localRect, type, `${selectedRank}º PRÊMIO`); onClose(); } }}
+                    onClick={() => { if(localRect) { onManualRectify(value, localRect, type, `${selectedPos}º PRÊMIO`); onClose(); } }}
                     className="w-full bg-amber-900/40 text-amber-200 py-3 rounded-2xl text-[8px] font-black uppercase tracking-widest active:scale-95"
                 >
                     SALVAR REALIDADE
@@ -98,7 +97,7 @@ const AdvancedPredictionDisplay: React.FC<AdvancedPredictionDisplayProps> = ({ p
 
     return (
         <div className="flex flex-col gap-4 h-full relative">
-            {/* SEÇÃO ELITE ULTRA NEON */}
+            {/* SEÇÃO ELITE COM DESTAQUE NEON ÂMBAR ULTRA INTENSO */}
             <div className="bg-slate-900 rounded-[2.5rem] border-2 border-amber-500 relative z-[40] shadow-[0_0_40px_rgba(245,158,11,0.5)] overflow-hidden">
                 <div className="bg-slate-950/80 p-5 rounded-[2.4rem] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent)] pointer-events-none"></div>
@@ -120,9 +119,14 @@ const AdvancedPredictionDisplay: React.FC<AdvancedPredictionDisplayProps> = ({ p
                                 </button>
                                 {activeMenu?.id === `elite-${idx}` && (
                                     <PositionMenu 
-                                        value={item.value} type="Dezena" label={activeMenu.label}
-                                        localRect={localRect} onLocalRectChange={setLocalRect}
-                                        onClose={() => setActiveMenu(null)} onManualRectify={onManualRectify} onMarkHit={onMarkHit}
+                                        value={item.value} 
+                                        type="Dezena" 
+                                        label={activeMenu.label}
+                                        localRect={localRect}
+                                        onLocalRectChange={setLocalRect}
+                                        onClose={() => setActiveMenu(null)}
+                                        onManualRectify={onManualRectify}
+                                        onMarkHit={onMarkHit}
                                     />
                                 )}
                             </div>
@@ -146,9 +150,14 @@ const AdvancedPredictionDisplay: React.FC<AdvancedPredictionDisplayProps> = ({ p
                             </button>
                             {activeMenu?.id === `triad-d-${idx}` && (
                                 <PositionMenu 
-                                    value={item.value} type="Dezena" label={activeMenu.label}
-                                    localRect={localRect} onLocalRectChange={setLocalRect}
-                                    onClose={() => setActiveMenu(null)} onManualRectify={onManualRectify} onMarkHit={onMarkHit}
+                                    value={item.value} 
+                                    type="Dezena" 
+                                    label={activeMenu.label}
+                                    localRect={localRect}
+                                    onLocalRectChange={setLocalRect}
+                                    onClose={() => setActiveMenu(null)}
+                                    onManualRectify={onManualRectify}
+                                    onMarkHit={onMarkHit}
                                 />
                             )}
                         </div>
@@ -171,9 +180,14 @@ const AdvancedPredictionDisplay: React.FC<AdvancedPredictionDisplayProps> = ({ p
                             </button>
                             {activeMenu?.id === `triad-c-${idx}` && (
                                 <PositionMenu 
-                                    value={item.value} type="Centena" label={activeMenu.label}
-                                    localRect={localRect} onLocalRectChange={setLocalRect}
-                                    onClose={() => setActiveMenu(null)} onManualRectify={onManualRectify} onMarkHit={onMarkHit}
+                                    value={item.value} 
+                                    type="Centena" 
+                                    label={activeMenu.label}
+                                    localRect={localRect}
+                                    onLocalRectChange={setLocalRect}
+                                    onClose={() => setActiveMenu(null)}
+                                    onManualRectify={onManualRectify}
+                                    onMarkHit={onMarkHit}
                                 />
                             )}
                         </div>
