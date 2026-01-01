@@ -1,0 +1,56 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500/30;
+    scrollbar-width: none; 
+    -ms-overflow-style: none;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+  }
+  
+  body::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+#root {
+  @apply min-h-screen w-full flex flex-col;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Brilho Dourado Lateral Amber - Estático e Elegante */
+.glow-amber-sides {
+  border-left: 3px solid #f59e0b;
+  border-right: 3px solid #f59e0b;
+  box-shadow: inset 10px 0 15px -10px rgba(245,158,11,0.2), 
+              inset -10px 0 15px -10px rgba(245,158,11,0.2);
+}
+
+.module-card {
+  @apply bg-slate-900/60 border border-slate-800/60 rounded-[1.5rem] shadow-2xl backdrop-blur-xl transition-all duration-300;
+}
+
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+@media (max-width: 380px) {
+    .module-grid {
+        gap: 0.35rem;
+    }
+}
