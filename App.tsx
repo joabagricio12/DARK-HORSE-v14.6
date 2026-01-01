@@ -12,7 +12,7 @@ import { runGenerationCycle, parseModules } from './analysisService';
 import { INITIAL_HISTORY } from './initialData';
 
 const App: React.FC = () => {
-    // Persistence initialization
+    // Persistência Avançada (LocalStorage + Offline Recovery)
     const [inputHistory, setInputHistory] = useState<DataSet[]>(() => {
         const saved = localStorage.getItem('dh_input_v14_6');
         return saved ? JSON.parse(saved) : INITIAL_HISTORY;
@@ -26,7 +26,11 @@ const App: React.FC = () => {
     const [m2, setM2] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m2_v14_6') || '["","","","","","",""]'));
     const [m3, setM3] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m3_v14_6') || '["","","","","","",""]'));
 
-    const [generatedResult, setGeneratedResult] = useState<DataSet | null>(null);
+    const [generatedResult, setGeneratedResult] = useState<DataSet | null>(() => {
+        const saved = localStorage.getItem('dh_last_gen_v14_6');
+        return saved ? JSON.parse(saved) : null;
+    });
+    
     const [candidates, setCandidates] = useState<Candidate[] | null>(null);
     const [advancedPredictions, setAdvancedPredictions] = useState<AdvancedPredictions | null>(null);
     const [analysisData, setAnalysisData] = useState<CombinedAnalysis | null>(null);
@@ -34,10 +38,11 @@ const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [notification, setNotification] = useState<string | null>(null);
+    const [isLocked, setIsLocked] = useState(() => localStorage.getItem('dh_btn_lock') === 'true');
 
     const undoStack = useRef<string[][]>([]);
 
-    // Continuous Persistence Effect
+    // Sincronização de Persistência
     useEffect(() => {
         localStorage.setItem('dh_input_v14_6', JSON.stringify(inputHistory));
         localStorage.setItem('dh_hits_v14_6', JSON.stringify(hitsHistory));
@@ -47,7 +52,49 @@ const App: React.FC = () => {
         localStorage.setItem('dh_m1_v14_6', JSON.stringify(m1));
         localStorage.setItem('dh_m2_v14_6', JSON.stringify(m2));
         localStorage.setItem('dh_m3_v14_6', JSON.stringify(m3));
-    }, [inputHistory, hitsHistory, generatedHistory, rectificationHistory, settings, m1, m2, m3]);
+        localStorage.setItem('dh_btn_lock', isLocked.toString());
+        if (generatedResult) localStorage.setItem('dh_last_gen_v14_6', JSON.stringify(generatedResult));
+    }, [inputHistory, hitsHistory, generatedHistory, rectificationHistory, settings, m1, m2, m3, isLocked, generatedResult]);
+
+    // Função de Comparação Automática (M3 vs Última Geração)
+    const autoCompare = useCallback((newM3: string[]) => {
+        if (!generatedResult) return;
+        
+        const newHits: HitRecord[] = [];
+        newM3.forEach((val, idx) => {
+            if (!val || val.length < 3) return;
+            const pred = generatedResult[idx].join('');
+            
+            // Acerto Exato
+            if (val === pred) {
+                newHits.push({
+                    id: crypto.randomUUID(),
+                    value: val,
+                    type: idx === 6 ? 'Centena' : 'Milhar',
+                    status: 'Acerto',
+                    position: idx + 1,
+                    timestamp: Date.now()
+                });
+            } 
+            // Quase Acerto (Permutação/Ordem diferente)
+            else if (val.split('').sort().join('') === pred.split('').sort().join('')) {
+                newHits.push({
+                    id: crypto.randomUUID(),
+                    value: val,
+                    type: idx === 6 ? 'Centena' : 'Milhar',
+                    status: 'Quase Acerto',
+                    position: idx + 1,
+                    timestamp: Date.now()
+                });
+            }
+        });
+
+        if (newHits.length > 0) {
+            setHitsHistory(prev => [...newHits, ...prev].slice(0, 150));
+            setNotification(`AUTO-SINC: ${newHits.length} PADRÕES DETECTADOS`);
+            setTimeout(() => setNotification(null), 3000);
+        }
+    }, [generatedResult]);
 
     const handleMarkHit = useCallback((value: string, type: 'Milhar' | 'Centena' | 'Dezena', pos: number, status: 'Acerto' | 'Quase Acerto' = 'Acerto') => {
         const newHit: HitRecord = { 
@@ -58,7 +105,7 @@ const App: React.FC = () => {
             position: pos, 
             timestamp: Date.now() 
         };
-        setHitsHistory(prev => [newHit, ...prev].slice(0, 100));
+        setHitsHistory(prev => [newHit, ...prev].slice(0, 150));
         setNotification(`${status.toUpperCase()}: ${value} (Rank ${pos})`);
         setTimeout(() => setNotification(null), 2500);
     }, []);
@@ -73,13 +120,13 @@ const App: React.FC = () => {
             rankLabel,
             timestamp: Date.now()
         };
-        setRectificationHistory(prev => [newRec, ...prev].slice(0, 100));
+        setRectificationHistory(prev => [newRec, ...prev].slice(0, 150));
         setNotification(`REALIDADE SALVA: ${act}`);
         setTimeout(() => setNotification(null), 2500);
     }, []);
 
     const handleGenerate = () => {
-        if (isLoading) return;
+        if (isLoading || isLocked) return;
         setIsLoading(true);
         const parsed = parseModules([m1, m2, m3]);
         setTimeout(() => {
@@ -88,17 +135,28 @@ const App: React.FC = () => {
             setCandidates(res.candidates);
             setAdvancedPredictions(res.advancedPredictions);
             setAnalysisData(res.analysis);
-            setGeneratedHistory(prev => [res.result, ...prev].slice(0, 50));
+            setGeneratedHistory(prev => [res.result, ...prev].slice(0, 100));
             setIsLoading(false);
+            setIsLocked(true); // Bloqueia após gerar
         }, 1500);
+    };
+
+    const handleUpdateM3 = (v: string[]) => {
+        if (isLocked) {
+            autoCompare(v); // Compara antes de rotacionar se necessário
+            setIsLocked(false); // Desbloqueia ao inserir novos dados
+        }
+        setM3(v);
     };
 
     const handlePasteM3 = (v: string[]) => {
         undoStack.current.push([...m3]);
+        autoCompare(v);
         setM1(m2); 
         setM2(m3); 
         setM3(v);
-        setInputHistory(prev => [...prev, v.map(l => l.split('').map(Number))].slice(-100));
+        setInputHistory(prev => [...prev, v.map(l => l.split('').map(Number))].slice(-150));
+        setIsLocked(false); // Libera o botão
     };
 
     return (
@@ -130,23 +188,23 @@ const App: React.FC = () => {
                     id="3" 
                     title="ATUAL" 
                     values={m3} 
-                    setValues={setM3} 
+                    setValues={handleUpdateM3} 
                     onPaste={handlePasteM3} 
-                    onClear={() => setM3(Array(7).fill(""))}
-                    onUndo={() => { if(undoStack.current.length > 0) setM3(undoStack.current.pop()!) }}
+                    onClear={() => { setM3(Array(7).fill("")); setIsLocked(false); }}
+                    onUndo={() => { if(undoStack.current.length > 0) { setM3(undoStack.current.pop()!); setIsLocked(false); } }}
                 />
             </div>
 
             <button 
                 onClick={handleGenerate} 
-                disabled={isLoading}
+                disabled={isLoading || isLocked}
                 className={`w-full py-5 font-orbitron font-black rounded-[1.5rem] uppercase tracking-widest transition-all shadow-lg border-2 ${
-                    isLoading 
-                    ? 'bg-slate-900/50 border-slate-800 text-slate-600 cursor-not-allowed' 
-                    : 'bg-slate-900 border-amber-600 text-amber-500 active:scale-95'
+                    isLoading || isLocked
+                    ? 'bg-slate-900/50 border-slate-800 text-slate-700 cursor-not-allowed' 
+                    : 'bg-slate-900 border-amber-600 text-amber-500 active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
                 }`}
             >
-                {isLoading ? 'CALIBRANDO MATRIZ...' : 'EXECUTAR ANÁLISE'}
+                {isLoading ? 'CALIBRANDO MATRIZ...' : isLocked ? 'AGUARDANDO M3...' : 'EXECUTAR ANÁLISE'}
             </button>
 
             {(generatedResult || isLoading) && (
