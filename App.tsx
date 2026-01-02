@@ -12,7 +12,6 @@ import { runGenerationCycle, parseModules } from './analysisService';
 import { INITIAL_HISTORY } from './initialData';
 
 const App: React.FC = () => {
-    // Configurações de Ciclo de Limpeza (999 limite -> remove 20 mais antigos)
     const MAX_RECORDS = 999;
     const CLEANUP_AMOUNT = 20;
 
@@ -25,63 +24,72 @@ const App: React.FC = () => {
         return combined;
     };
 
-    // Persistência v14.9
+    // Estados com Persistência Restaurada v15.0
     const [inputHistory, setInputHistory] = useState<DataSet[]>(() => {
-        const saved = localStorage.getItem('dh_input_v14_8');
+        const saved = localStorage.getItem('dh_input_v15');
         return saved ? JSON.parse(saved) : INITIAL_HISTORY;
     });
-    const [hitsHistory, setHitsHistory] = useState<HitRecord[]>(() => JSON.parse(localStorage.getItem('dh_hits_v14_8') || '[]'));
-    const [generatedHistory, setGeneratedHistory] = useState<DataSet[]>(() => JSON.parse(localStorage.getItem('dh_gen_v14_8') || '[]'));
-    const [rectificationHistory, setRectificationHistory] = useState<RectificationRecord[]>(() => JSON.parse(localStorage.getItem('dh_rect_v14_8') || '[]'));
-    const [settings, setSettings] = useState<AppSettings>(() => JSON.parse(localStorage.getItem('dh_settings_v14_8') || '{"entropy": 0.5, "voiceEnabled": false}'));
+    const [hitsHistory, setHitsHistory] = useState<HitRecord[]>(() => JSON.parse(localStorage.getItem('dh_hits_v15') || '[]'));
+    const [generatedHistory, setGeneratedHistory] = useState<DataSet[]>(() => JSON.parse(localStorage.getItem('dh_gen_v15') || '[]'));
+    const [rectificationHistory, setRectificationHistory] = useState<RectificationRecord[]>(() => JSON.parse(localStorage.getItem('dh_rect_v15') || '[]'));
+    const [settings, setSettings] = useState<AppSettings>(() => JSON.parse(localStorage.getItem('dh_settings_v15') || '{"entropy": 0.5, "voiceEnabled": false}'));
 
-    const [m1, setM1] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m1_v14_8') || '["","","","","","",""]'));
-    const [m2, setM2] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m2_v14_8') || '["","","","","","",""]'));
-    const [m3, setM3] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m3_v14_8') || '["","","","","","",""]'));
+    const [m1, setM1] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m1_v15') || '["","","","","","",""]'));
+    const [m2, setM2] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m2_v15') || '["","","","","","",""]'));
+    const [m3, setM3] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m3_v15') || '["","","","","","",""]'));
 
+    // Recuperação de predições para evitar desaparecimento
     const [generatedResult, setGeneratedResult] = useState<DataSet | null>(() => {
-        const saved = localStorage.getItem('dh_last_gen_v14_8');
+        const saved = localStorage.getItem('dh_last_gen_v15');
         return saved ? JSON.parse(saved) : null;
     });
-    
-    const [candidates, setCandidates] = useState<Candidate[] | null>(null);
-    const [advancedPredictions, setAdvancedPredictions] = useState<AdvancedPredictions | null>(null);
+    const [candidates, setCandidates] = useState<Candidate[] | null>(() => {
+        const saved = localStorage.getItem('dh_last_cand_v15');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [advancedPredictions, setAdvancedPredictions] = useState<AdvancedPredictions | null>(() => {
+        const saved = localStorage.getItem('dh_last_adv_v15');
+        return saved ? JSON.parse(saved) : null;
+    });
     const [analysisData, setAnalysisData] = useState<CombinedAnalysis | null>(null);
 
     const [isLoading, setIsLoading] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [notification, setNotification] = useState<string | null>(null);
-    const [isLocked, setIsLocked] = useState(() => localStorage.getItem('dh_btn_lock_v14_8') === 'true');
+    const [isLocked, setIsLocked] = useState(() => localStorage.getItem('dh_btn_lock_v15') === 'true');
 
     const undoStack = useRef<string[][]>([]);
 
+    // Efeito de Persistência Unificado
     useEffect(() => {
-        localStorage.setItem('dh_input_v14_8', JSON.stringify(inputHistory));
-        localStorage.setItem('dh_hits_v14_8', JSON.stringify(hitsHistory));
-        localStorage.setItem('dh_gen_v14_8', JSON.stringify(generatedHistory));
-        localStorage.setItem('dh_rect_v14_8', JSON.stringify(rectificationHistory));
-        localStorage.setItem('dh_settings_v14_8', JSON.stringify(settings));
-        localStorage.setItem('dh_m1_v14_8', JSON.stringify(m1));
-        localStorage.setItem('dh_m2_v14_8', JSON.stringify(m2));
-        localStorage.setItem('dh_m3_v14_8', JSON.stringify(m3));
-        localStorage.setItem('dh_btn_lock_v14_8', isLocked.toString());
-        if (generatedResult) localStorage.setItem('dh_last_gen_v14_8', JSON.stringify(generatedResult));
-    }, [inputHistory, hitsHistory, generatedHistory, rectificationHistory, settings, m1, m2, m3, isLocked, generatedResult]);
+        localStorage.setItem('dh_input_v15', JSON.stringify(inputHistory));
+        localStorage.setItem('dh_hits_v15', JSON.stringify(hitsHistory));
+        localStorage.setItem('dh_gen_v15', JSON.stringify(generatedHistory));
+        localStorage.setItem('dh_rect_v15', JSON.stringify(rectificationHistory));
+        localStorage.setItem('dh_settings_v15', JSON.stringify(settings));
+        localStorage.setItem('dh_m1_v15', JSON.stringify(m1));
+        localStorage.setItem('dh_m2_v15', JSON.stringify(m2));
+        localStorage.setItem('dh_m3_v15', JSON.stringify(m3));
+        localStorage.setItem('dh_btn_lock_v15', isLocked.toString());
+        if (generatedResult) localStorage.setItem('dh_last_gen_v15', JSON.stringify(generatedResult));
+        if (candidates) localStorage.setItem('dh_last_cand_v15', JSON.stringify(candidates));
+        if (advancedPredictions) localStorage.setItem('dh_last_adv_v15', JSON.stringify(advancedPredictions));
+    }, [inputHistory, hitsHistory, generatedHistory, rectificationHistory, settings, m1, m2, m3, isLocked, generatedResult, candidates, advancedPredictions]);
 
-    // Função Principal de Comparação Instantânea e Gravação Automática
-    const processInstantSync = useCallback((realData: string[]) => {
-        if (!generatedResult) return;
+    // Comparação Automática Instantânea
+    const processInstantSync = useCallback((realData: string[], predictions: DataSet | null) => {
+        if (!predictions) return;
         
         const newHits: HitRecord[] = [];
         const newRects: RectificationRecord[] = [];
 
         realData.forEach((actualValue, idx) => {
             if (!actualValue || actualValue.length < 3) return;
-            const predictedValue = generatedResult[idx].join('');
+            const predictedValue = predictions[idx].join('');
             const type = idx === 6 ? 'Centena' : 'Milhar';
             const rankLabel = idx === 0 ? "1º Prêmio (Elite)" : `${idx + 1}º Prêmio`;
 
-            // 1. Detecção de Acerto Exato
+            // Verificação de Acerto Exato
             if (actualValue === predictedValue) {
                 newHits.push({
                     id: crypto.randomUUID(),
@@ -92,7 +100,7 @@ const App: React.FC = () => {
                     timestamp: Date.now()
                 });
             } 
-            // 2. Detecção de Quase Acerto (Permutação)
+            // Verificação de Permutação (Quase Acerto)
             else if (actualValue.split('').sort().join('') === predictedValue.split('').sort().join('')) {
                 newHits.push({
                     id: crypto.randomUUID(),
@@ -104,8 +112,7 @@ const App: React.FC = () => {
                 });
             }
 
-            // 3. Gravação Automática de Realidade (Correção de Rota)
-            // Gravamos sempre para que a IA aprenda o desvio estatístico
+            // Gravação Automática em Ajustes (Aprendizado da IA)
             newRects.push({
                 id: crypto.randomUUID(),
                 type,
@@ -116,7 +123,6 @@ const App: React.FC = () => {
             });
         });
 
-        // Atualização Atômica dos Históricos
         if (newHits.length > 0) {
             setHitsHistory(prev => {
                 let updated = prev;
@@ -134,10 +140,10 @@ const App: React.FC = () => {
         }
 
         if (newHits.length > 0) {
-            setNotification(`AUTO-SYNC: ${newHits.length} ACERTOS/PERMUTAS REGISTRADOS`);
+            setNotification(`SISTEMA AUTO-SYNC: ${newHits.length} PADRÕES REGISTRADOS`);
             setTimeout(() => setNotification(null), 3000);
         }
-    }, [generatedResult]);
+    }, []);
 
     const handleMarkHit = useCallback((value: string, type: 'Milhar' | 'Centena' | 'Dezena', pos: number, status: 'Acerto' | 'Quase Acerto' = 'Acerto') => {
         const newHit: HitRecord = { id: crypto.randomUUID(), value, type, status, position: pos, timestamp: Date.now() };
@@ -150,7 +156,7 @@ const App: React.FC = () => {
         if (!act || act.length < 2) return;
         const newRec: RectificationRecord = { id: crypto.randomUUID(), type, generated: gen, actual: act, rankLabel, timestamp: Date.now() };
         setRectificationHistory(prev => maintainLimit(prev, newRec, true));
-        setNotification(`AJUSTE MANUAL SALVO`);
+        setNotification(`AJUSTE MANUAL REGISTRADO`);
         setTimeout(() => setNotification(null), 2000);
     }, []);
 
@@ -178,20 +184,21 @@ const App: React.FC = () => {
     const handlePasteM3 = (v: string[]) => {
         undoStack.current.push([...m3]);
         
-        // 1. Executa Comparação Instantânea antes de rotacionar
-        processInstantSync(v);
+        // Comparação instantânea e automática baseada na última predição
+        processInstantSync(v, generatedResult);
 
-        // 2. Rotaciona Módulos (Rotação de Memória)
+        // Rotação de Dados
         setM1(m2); 
         setM2(m3); 
         setM3(v);
 
-        // 3. Grava Realidade no Histórico de Entrada para a próxima análise
+        // Gravação automática no histórico de entradas
         const numericSet = v.map(line => line.split('').map(Number));
         setInputHistory(prev => maintainLimit(prev, numericSet, false));
         
-        // 4. Libera botão de análise para os novos dados
         setIsLocked(false);
+        setNotification("DADOS ATUALIZADOS - IA RECALIBRADA");
+        setTimeout(() => setNotification(null), 2000);
     };
 
     const handleClearM3 = () => {
