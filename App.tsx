@@ -24,61 +24,64 @@ const App: React.FC = () => {
         return combined;
     };
 
-    // Estados com Persistência Restaurada v15.0
+    // Estados com Persistência Reforçada v15.3
     const [inputHistory, setInputHistory] = useState<DataSet[]>(() => {
-        const saved = localStorage.getItem('dh_input_v15');
+        const saved = localStorage.getItem('dh_input_v15_2');
         return saved ? JSON.parse(saved) : INITIAL_HISTORY;
     });
-    const [hitsHistory, setHitsHistory] = useState<HitRecord[]>(() => JSON.parse(localStorage.getItem('dh_hits_v15') || '[]'));
-    const [generatedHistory, setGeneratedHistory] = useState<DataSet[]>(() => JSON.parse(localStorage.getItem('dh_gen_v15') || '[]'));
-    const [rectificationHistory, setRectificationHistory] = useState<RectificationRecord[]>(() => JSON.parse(localStorage.getItem('dh_rect_v15') || '[]'));
-    const [settings, setSettings] = useState<AppSettings>(() => JSON.parse(localStorage.getItem('dh_settings_v15') || '{"entropy": 0.5, "voiceEnabled": false}'));
+    const [hitsHistory, setHitsHistory] = useState<HitRecord[]>(() => JSON.parse(localStorage.getItem('dh_hits_v15_2') || '[]'));
+    const [generatedHistory, setGeneratedHistory] = useState<DataSet[]>(() => JSON.parse(localStorage.getItem('dh_gen_v15_2') || '[]'));
+    const [rectificationHistory, setRectificationHistory] = useState<RectificationRecord[]>(() => JSON.parse(localStorage.getItem('dh_rect_v15_2') || '[]'));
+    const [settings, setSettings] = useState<AppSettings>(() => JSON.parse(localStorage.getItem('dh_settings_v15_2') || '{"entropy": 0.5, "voiceEnabled": false}'));
 
-    const [m1, setM1] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m1_v15') || '["","","","","","",""]'));
-    const [m2, setM2] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m2_v15') || '["","","","","","",""]'));
-    const [m3, setM3] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m3_v15') || '["","","","","","",""]'));
+    const [m1, setM1] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m1_v15_2') || '["","","","","","",""]'));
+    const [m2, setM2] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m2_v15_2') || '["","","","","","",""]'));
+    const [m3, setM3] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_m3_v15_2') || '["","","","","","",""]'));
 
-    // Recuperação de predições para evitar desaparecimento
     const [generatedResult, setGeneratedResult] = useState<DataSet | null>(() => {
-        const saved = localStorage.getItem('dh_last_gen_v15');
+        const saved = localStorage.getItem('dh_last_gen_v15_2');
         return saved ? JSON.parse(saved) : null;
     });
     const [candidates, setCandidates] = useState<Candidate[] | null>(() => {
-        const saved = localStorage.getItem('dh_last_cand_v15');
+        const saved = localStorage.getItem('dh_last_cand_v15_2');
         return saved ? JSON.parse(saved) : null;
     });
     const [advancedPredictions, setAdvancedPredictions] = useState<AdvancedPredictions | null>(() => {
-        const saved = localStorage.getItem('dh_last_adv_v15');
+        const saved = localStorage.getItem('dh_last_adv_v15_2');
         return saved ? JSON.parse(saved) : null;
     });
-    const [analysisData, setAnalysisData] = useState<CombinedAnalysis | null>(null);
+    const [analysisData, setAnalysisData] = useState<CombinedAnalysis | null>(() => {
+        const saved = localStorage.getItem('dh_last_ana_v15_2');
+        return saved ? JSON.parse(saved) : null;
+    });
 
     const [isLoading, setIsLoading] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [notification, setNotification] = useState<string | null>(null);
-    const [isLocked, setIsLocked] = useState(() => localStorage.getItem('dh_btn_lock_v15') === 'true');
+    const [isLocked, setIsLocked] = useState(() => localStorage.getItem('dh_btn_lock_v15_2') === 'true');
 
     const undoStack = useRef<string[][]>([]);
 
-    // Efeito de Persistência Unificado
     useEffect(() => {
-        localStorage.setItem('dh_input_v15', JSON.stringify(inputHistory));
-        localStorage.setItem('dh_hits_v15', JSON.stringify(hitsHistory));
-        localStorage.setItem('dh_gen_v15', JSON.stringify(generatedHistory));
-        localStorage.setItem('dh_rect_v15', JSON.stringify(rectificationHistory));
-        localStorage.setItem('dh_settings_v15', JSON.stringify(settings));
-        localStorage.setItem('dh_m1_v15', JSON.stringify(m1));
-        localStorage.setItem('dh_m2_v15', JSON.stringify(m2));
-        localStorage.setItem('dh_m3_v15', JSON.stringify(m3));
-        localStorage.setItem('dh_btn_lock_v15', isLocked.toString());
-        if (generatedResult) localStorage.setItem('dh_last_gen_v15', JSON.stringify(generatedResult));
-        if (candidates) localStorage.setItem('dh_last_cand_v15', JSON.stringify(candidates));
-        if (advancedPredictions) localStorage.setItem('dh_last_adv_v15', JSON.stringify(advancedPredictions));
-    }, [inputHistory, hitsHistory, generatedHistory, rectificationHistory, settings, m1, m2, m3, isLocked, generatedResult, candidates, advancedPredictions]);
+        localStorage.setItem('dh_input_v15_2', JSON.stringify(inputHistory));
+        localStorage.setItem('dh_hits_v15_2', JSON.stringify(hitsHistory));
+        localStorage.setItem('dh_gen_v15_2', JSON.stringify(generatedHistory));
+        localStorage.setItem('dh_rect_v15_2', JSON.stringify(rectificationHistory));
+        localStorage.setItem('dh_settings_v15_2', JSON.stringify(settings));
+        localStorage.setItem('dh_m1_v15_2', JSON.stringify(m1));
+        localStorage.setItem('dh_m2_v15_2', JSON.stringify(m2));
+        localStorage.setItem('dh_m3_v15_2', JSON.stringify(m3));
+        localStorage.setItem('dh_btn_lock_v15_2', isLocked.toString());
+        if (generatedResult) localStorage.setItem('dh_last_gen_v15_2', JSON.stringify(generatedResult));
+        if (candidates) localStorage.setItem('dh_last_cand_v15_2', JSON.stringify(candidates));
+        if (advancedPredictions) localStorage.setItem('dh_last_adv_v15_2', JSON.stringify(advancedPredictions));
+        if (analysisData) localStorage.setItem('dh_last_ana_v15_2', JSON.stringify(analysisData));
+    }, [inputHistory, hitsHistory, generatedHistory, rectificationHistory, settings, m1, m2, m3, isLocked, generatedResult, candidates, advancedPredictions, analysisData]);
 
-    // Comparação Automática Instantânea
-    const processInstantSync = useCallback((realData: string[], predictions: DataSet | null) => {
-        if (!predictions) return;
+    const processInstantSync = useCallback((realData: string[]) => {
+        const lastGenRaw = localStorage.getItem('dh_last_gen_v15_2');
+        if (!lastGenRaw) return;
+        const predictions = JSON.parse(lastGenRaw) as DataSet;
         
         const newHits: HitRecord[] = [];
         const newRects: RectificationRecord[] = [];
@@ -89,38 +92,12 @@ const App: React.FC = () => {
             const type = idx === 6 ? 'Centena' : 'Milhar';
             const rankLabel = idx === 0 ? "1º Prêmio (Elite)" : `${idx + 1}º Prêmio`;
 
-            // Verificação de Acerto Exato
             if (actualValue === predictedValue) {
-                newHits.push({
-                    id: crypto.randomUUID(),
-                    value: actualValue,
-                    type,
-                    status: 'Acerto',
-                    position: idx + 1,
-                    timestamp: Date.now()
-                });
-            } 
-            // Verificação de Permutação (Quase Acerto)
-            else if (actualValue.split('').sort().join('') === predictedValue.split('').sort().join('')) {
-                newHits.push({
-                    id: crypto.randomUUID(),
-                    value: actualValue,
-                    type,
-                    status: 'Quase Acerto',
-                    position: idx + 1,
-                    timestamp: Date.now()
-                });
+                newHits.push({ id: crypto.randomUUID(), value: actualValue, type, status: 'Acerto', position: idx + 1, timestamp: Date.now() });
+            } else if (actualValue.split('').sort().join('') === predictedValue.split('').sort().join('')) {
+                newHits.push({ id: crypto.randomUUID(), value: actualValue, type, status: 'Quase Acerto', position: idx + 1, timestamp: Date.now() });
             }
-
-            // Gravação Automática em Ajustes (Aprendizado da IA)
-            newRects.push({
-                id: crypto.randomUUID(),
-                type,
-                generated: predictedValue,
-                actual: actualValue,
-                rankLabel,
-                timestamp: Date.now()
-            });
+            newRects.push({ id: crypto.randomUUID(), type, generated: predictedValue, actual: actualValue, rankLabel, timestamp: Date.now() });
         });
 
         if (newHits.length > 0) {
@@ -130,7 +107,6 @@ const App: React.FC = () => {
                 return updated;
             });
         }
-
         if (newRects.length > 0) {
             setRectificationHistory(prev => {
                 let updated = prev;
@@ -138,9 +114,8 @@ const App: React.FC = () => {
                 return updated;
             });
         }
-
         if (newHits.length > 0) {
-            setNotification(`SISTEMA AUTO-SYNC: ${newHits.length} PADRÕES REGISTRADOS`);
+            setNotification(`AUTO-SYNC: ${newHits.length} PADRÕES REGISTRADOS`);
             setTimeout(() => setNotification(null), 3000);
         }
     }, []);
@@ -156,7 +131,7 @@ const App: React.FC = () => {
         if (!act || act.length < 2) return;
         const newRec: RectificationRecord = { id: crypto.randomUUID(), type, generated: gen, actual: act, rankLabel, timestamp: Date.now() };
         setRectificationHistory(prev => maintainLimit(prev, newRec, true));
-        setNotification(`AJUSTE MANUAL REGISTRADO`);
+        setNotification(`SISTEMA RECALIBRADO`);
         setTimeout(() => setNotification(null), 2000);
     }, []);
 
@@ -176,47 +151,23 @@ const App: React.FC = () => {
         }, 1200);
     };
 
-    const handleM3Change = (v: string[]) => {
-        setM3(v);
-        if (isLocked) setIsLocked(false);
-    };
-
     const handlePasteM3 = (v: string[]) => {
         undoStack.current.push([...m3]);
-        
-        // Comparação instantânea e automática baseada na última predição
-        processInstantSync(v, generatedResult);
-
-        // Rotação de Dados
+        processInstantSync(v);
         setM1(m2); 
         setM2(m3); 
         setM3(v);
-
-        // Gravação automática no histórico de entradas
         const numericSet = v.map(line => line.split('').map(Number));
         setInputHistory(prev => maintainLimit(prev, numericSet, false));
-        
         setIsLocked(false);
-        setNotification("DADOS ATUALIZADOS - IA RECALIBRADA");
+        setNotification("DADOS M3 ATUALIZADOS");
         setTimeout(() => setNotification(null), 2000);
-    };
-
-    const handleClearM3 = () => {
-        setM3(Array(7).fill(""));
-        setIsLocked(false);
-    };
-
-    const handleUndoM3 = () => {
-        if (undoStack.current.length > 0) {
-            setM3(undoStack.current.pop()!);
-            setIsLocked(false);
-        }
     };
 
     return (
         <div className="min-h-screen w-full flex flex-col bg-slate-950 px-3 pt-2 pb-12 gap-3 text-slate-100 no-scrollbar overflow-y-auto">
             {notification && (
-                <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900 border border-amber-500/50 text-amber-500 px-6 py-3 font-orbitron font-black text-[9px] rounded-full shadow-2xl animate-bounce text-center uppercase tracking-widest backdrop-blur-md">
+                <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900 border border-amber-500 text-amber-500 px-6 py-3 font-orbitron font-black text-[9px] rounded-full shadow-[0_0_20px_rgba(245,158,11,0.5)] animate-bounce text-center uppercase tracking-widest backdrop-blur-md">
                     {notification}
                 </div>
             )}
@@ -238,15 +189,7 @@ const App: React.FC = () => {
             <div className="module-grid">
                 <ModuleInput id="1" title="HISTÓRICO I" values={m1} setValues={setM1} readOnly />
                 <ModuleInput id="2" title="HISTÓRICO II" values={m2} setValues={setM2} readOnly />
-                <ModuleInput 
-                    id="3" 
-                    title="ATUAL (REAL)" 
-                    values={m3} 
-                    setValues={handleM3Change} 
-                    onPaste={handlePasteM3} 
-                    onClear={handleClearM3}
-                    onUndo={handleUndoM3}
-                />
+                <ModuleInput id="3" title="ATUAL (REAL)" values={m3} setValues={(v) => { setM3(v); if(isLocked) setIsLocked(false); }} onPaste={handlePasteM3} onClear={() => { setM3(Array(7).fill("")); setIsLocked(false); }} onUndo={() => { if(undoStack.current.length > 0) { setM3(undoStack.current.pop()!); setIsLocked(false); } }} />
             </div>
 
             <button 
@@ -258,29 +201,18 @@ const App: React.FC = () => {
                     : 'bg-slate-900 border-amber-600 text-amber-500 active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
                 }`}
             >
-                {isLoading ? 'SINCRONIZANDO...' : isLocked ? 'BLOQUEADO: COLOQUE RESULTADO' : 'EXECUTAR ANÁLISE SÊNIOR'}
+                {isLoading ? 'SINCRONIZANDO...' : isLocked ? 'BLOQUEADO: ATUALIZE M3' : 'EXECUTAR ANÁLISE SÊNIOR'}
             </button>
 
-            {(generatedResult || isLoading) && (
-                <div className="flex flex-col gap-3">
-                    <StatisticsDisplay analysis={analysisData} isLoading={isLoading} />
-                    {generatedResult && (
-                        <>
-                            <ResultDisplay result={generatedResult} onMarkHit={handleMarkHit} onManualRectify={handleManualRectify} />
-                            {advancedPredictions && <AdvancedPredictionDisplay predictions={advancedPredictions} onMarkHit={handleMarkHit} onManualRectify={handleManualRectify} />}
-                            {candidates && <CandidateDisplay candidates={candidates} onMarkHit={handleMarkHit} onManualRectify={handleManualRectify} />}
-                        </>
-                    )}
-                </div>
-            )}
+            {/* SEÇÕES FIXAS - Sempre renderizadas para manter o layout */}
+            <div className="flex flex-col gap-3">
+                <StatisticsDisplay analysis={analysisData} isLoading={isLoading} />
+                <ResultDisplay result={generatedResult} onMarkHit={handleMarkHit} onManualRectify={handleManualRectify} />
+                <AdvancedPredictionDisplay predictions={advancedPredictions} onMarkHit={handleMarkHit} onManualRectify={handleManualRectify} />
+                <CandidateDisplay candidates={candidates} onMarkHit={handleMarkHit} onManualRectify={handleManualRectify} />
+            </div>
 
-            <HistoryModal 
-                isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} 
-                inputHistory={inputHistory} onClearInputHistory={() => setInputHistory([])} onDeleteInputItem={(i) => setInputHistory(prev => prev.filter((_, idx) => idx !== i))}
-                generatedHistory={generatedHistory} onClearGeneratedHistory={() => setGeneratedHistory([])} onDeleteGeneratedItem={(i) => setGeneratedHistory(prev => prev.filter((_, idx) => idx !== i))}
-                hitsHistory={hitsHistory} onClearHitsHistory={() => setHitsHistory([])} onDeleteHitItem={(i) => setHitsHistory(prev => prev.filter((_, idx) => idx !== i))}
-                rectificationHistory={rectificationHistory} onClearRectificationHistory={() => setRectificationHistory([])} onDeleteRectificationItem={(i) => setRectificationHistory(prev => prev.filter((_, idx) => idx !== i))}
-            />
+            <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} inputHistory={inputHistory} onClearInputHistory={() => setInputHistory([])} onDeleteInputItem={(i) => setInputHistory(prev => prev.filter((_, idx) => idx !== i))} generatedHistory={generatedHistory} onClearGeneratedHistory={() => setGeneratedHistory([])} onDeleteGeneratedItem={(i) => setGeneratedHistory(prev => prev.filter((_, idx) => idx !== i))} hitsHistory={hitsHistory} onClearHitsHistory={() => setHitsHistory([])} onDeleteHitItem={(i) => setHitsHistory(prev => prev.filter((_, idx) => idx !== i))} rectificationHistory={rectificationHistory} onClearRectificationHistory={() => setRectificationHistory([])} onDeleteRectificationItem={(i) => setRectificationHistory(prev => prev.filter((_, idx) => idx !== i))} />
         </div>
     );
 };
